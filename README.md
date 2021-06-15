@@ -35,3 +35,7 @@ One note I have: regarding `prompt 2, question 1`, this seems like an operation 
   - if trying to handle `prompt 2, question 1` on the back end in some `node/express` api or `rails`, the db still seems like the better choice to handle this type of computation
 
 - I have a similar intuition for `prompt 2, question 1` - if trying to perform a string search on millions of records using JS that could otherwise be handled by our db or some other data store, it'd be more efficient to let the db do this computation which relates to `prompt 2, question 3`
+
+### Prompt 2, Question 2
+
+We can check to make sure that the report associated with whatever `document` or `page` we are looking at is not already in our list of reports that match a search term before performing the search operation on the `document` or `page` since if the report is already included, we know that we will not add it to the list of reports again

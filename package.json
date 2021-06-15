@@ -8,12 +8,13 @@
     "dev": "tsc && node ./dist/index.js",
     "seed": "psql -d chronograph -a -f ./seed.sql",
     "queryOne": "psql -d chronograph -a -f ./src/dbQueries/query1.sql",
-    "queryTwo":"psql -d chronograph -a -f ./src/dbQueries/query2.sql"
+    "queryTwo": "psql -d chronograph -a -f ./src/dbQueries/query2.sql"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^15.12.2",
     "typescript": "^4.3.2"
   }
 }
