@@ -6,6 +6,15 @@
 - foo
 - bar
 
+### Prompt 1, Question 1
+
+### Prompt 1, Question 2
+
+### Prompt 1, Question 3
+
+- is there a `users` table that each comment needs to be tied to?
+- each table `pages`, `documents` and `documents` would have a one-to-many relationship with associated `comments` - each table can have many comments, one comment canoot belong to multiple tables
+
 ---
 
 ## Assumptions about data store
