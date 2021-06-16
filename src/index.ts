@@ -1,9 +1,9 @@
-const store = require("./store");
-const {
+import store from "./store";
+import {
   compileReportsWithPageCounts,
   determineNumberPagesInReport,
   keywordSearch,
-} = require("./dataHandling");
+} from "./dataHandling";
 
 console.log(
   "compile single report with page count",

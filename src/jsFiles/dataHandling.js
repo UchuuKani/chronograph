@@ -145,6 +145,7 @@ function keywordSearch(dataStore, searchTerm) {
   return matchingReports;
 }
 
+// leaving this function in to compare against compileReportsWithPageCounts
 // choosing to pass in the data source we would read from in case there are multiple data sources with the same structure as IStore
 function determineNumberPagesInReport(reportId, dataStore) {
   // handle case where we are passed a reportId that doesn't exist - should also handle if type of reportId is not a number or cannot be

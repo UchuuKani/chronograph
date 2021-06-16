@@ -8,7 +8,7 @@ import {
   getReports,
 } from "./utility";
 
-// iterate through all pages and make object where key is document id, and value is a set or array, whatever, that contains all pages for a document
+// iterate through all pages and make object where key is document id, and value is number of pages associated with that document
 export function compileReportsWithPageCounts(dataStore: IStore) {
   let docToPagesCountMap: { [id: number]: number } = {};
   for (let pageId in dataStore.page) {
@@ -21,7 +21,7 @@ export function compileReportsWithPageCounts(dataStore: IStore) {
     }
   }
 
-  // iterate through all documents and make object where key is documentId and value is number of pages associated with document
+  // iterate through all documents and make object where key is reportId and value is an object containing document IDs
   let reportToDocsMap: {
     [reportId: number]: { [documentId: number]: boolean };
   } = {};
@@ -64,7 +64,7 @@ export function compileReportsWithPageCounts(dataStore: IStore) {
   return reportsPagesCounts;
 }
 
-// would a trie be appropriate here?
+// would a different data structure be more appropriate?
 export function keywordSearch(
   dataStore: IStore,
   searchTerm: string
@@ -139,6 +139,7 @@ export function keywordSearch(
   return matchingReports;
 }
 
+// leaving this function in to compare against compileReportsWithPageCounts
 // choosing to pass in the data source we would read from in case there are multiple data sources with the same structure as IStore
 export function determineNumberPagesInReport(
   reportId: number,

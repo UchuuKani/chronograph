@@ -2,7 +2,7 @@
 
 ## Running this project
 
-In order to run the JS code in the project, first clone it to your machine using `git clone https://github.com/UchuuKani/chronograph.git` and change into the directory. Afterwards, you can install dependencies using `npm install`, and then run the project using `npm run dev`. This script will run two functions used to answer the first two questions asked in `Part 2` of the case study.
+In order to run the JS code in the project, first clone it to your machine using `git clone https://github.com/UchuuKani/chronograph.git` and change into the created `chronograph` directory. Afterwards, you can install dependencies (Typescript) using `npm install`, and then run the project using `npm run dev`. This script will run two functions used to answer the first two questions asked in `Part 2` of the case study (files written using vanilla ES6+ Javascript are also available and can be run using `npm run devJS`).
 
 There are also scripts to run database operations to generate the schema outlined in `Appendix A` and seed it with data (`npm run seed`), and perform the queries asked by the case study in `Part 1` (`npm run queryOne` and `npm run queryTwo`)
 
@@ -27,32 +27,50 @@ Some considerations include:
 - is there a `users` table that each `comment` needs to be associated with?
 - each table `pages`, `documents` and `documents` would have a one-to-many relationship with associated `comments` - each table can have many comments, one comment canoot belong to multiple tables
 - if we were to delete a row in either `reports`, `documents`, or `pages`, we would want to delete any comments associated with that entry
+- will we ever have to combine data from multiple types of comments, like report comments with document comments?
 
-One approach we could take is to create a comments table for each type of existing table, such as a `report_comments` table, `document_comments` table where each of these tables has an INTEGER `id` column, `content` column of type TEXT to hold the text content for a comment, and a foreign key of type INTEGER to associate the `comment` with an entry in another table.
+1. One approach we could take is to create a comments table for each type of existing table, such as a `report_comments` table, `document_comments` table where each of these tables has an INTEGER `id` column, `content` column of type TEXT to hold the text content for a comment, and a foreign key of type INTEGER to associate the `comment` with an entry in another table.
 
-Another approach could be create a single table, `comments` that contains an INTEGER primary key, along with INTEGER columns for `report_id`, `document_id`, and `page_id` and associate a new comment with an entry in one of the tables by creating the `comment` row with the corresponding table ID, while leaving the other IDs as `NULL`. We would also include a row of type TEXT to hold the `content` of the comment.
+2. Another approach could be create a single table, `comments` that contains an INTEGER primary key, along with INTEGER columns for `report_id`, `document_id`, and `page_id` and associate a new comment with an entry in one of the tables by creating the `comment` row with the corresponding table ID, while leaving the other IDs as `NULL`. We would also include a row of type TEXT to hold the `content` of the comment.
 
----
+3. Building off the second approach, we could create a table `comment_entity` that has a primary key `comment_entity_id` as INTEGER, and a `comment_type` as a string type that relates to the type of comment, such as `report`, `document`, or `page`. We could then set up a `comments` table that holds comments for all three tables with an INTEGER primary key `comment_id`, `comment_entity_id` to act as a foreign key also of type INTEGER, and then other columns such as `content`, potentially `user_id` if there are users associated with comments, etc.
 
-## Assumptions about data store
+I would probably not choose the second approach due to the `NULL` foreign keys, and in the end I would choose approach three over approach one to reduce the number of tables we would have to create, especially in the future in case we need to create comments for additional entities besdies `reports`, `pages`, and `documents`.
 
-- `determineNumberPagesInReport` function was first attempt at prompt 2, question 1 - for each report, iterate through all documents and find all related to a given report and create a map of `{documentId: true}` for every `document` related to a report. Then iterate through all `pages`, and if a page is found in that `document` map, increment a variable to indicate we found a page related to a document
-  - problem is, for every report we'd iterate through all documents and pages once
-  - want to reduce the number of times we'd need to iterate through `documents` and `pages` data since I am assuming there'd be many documents associated with a report, and many more pages associated with a single document
-  - idea is to create a data structure by accessing `documents` and `pages` once, and then using that data structure to determine number of pages for a single report in constant time look up, or at least improve efficiency somewhat so we don't have to loop through all documents and all reports every time
+## Prompt 2
 
-One note I have: regarding `prompt 2, question 1`, this seems like an operation more suited for the DB to handle since RDBMS are definitely better at these types of operations than JS, especially for larger data sets. JS better for handling IO tasks like making many db calls concurrently
+### Prompt 2, Question 1
 
-- from my perspective, if this `prompt 2, question 1` is being run on the front end of some application, we should let the db handle this operation if the size of the data set is large (as to what "large" might be, I am unsure at the moment) - might be faster to let the db handle this on the backend depending on size. I assume `prompt 2, question 3`, while not directly addressing `prompt 2, question 1` sort of acknowledges this by asking how we'd transform a seemingly heavy task using JS to a task that is delegated to an API call instead
+Function name: `compileReportsWithPageCounts`
 
-  - and if the data set isn't that large (what is considered "large" still not known) and we are doing this computation on the frontend, then the implementation for `prompt 2, question 1` might not matter so much from a performance perspective. Would want to wait to know that this operation is a performance bottle neck before trying to optimize it further, as the performance bottle neck on the front end may come from slow or unneccesary renders, or some other source.
-  - if trying to handle `prompt 2, question 1` on the back end in some `node/express` api or `rails`, the db still seems like the better choice to handle this type of computation
+For this task, my approach was to restructure the data in the `store` object in order to more easily associate `reports` with `documents`, and `documents` with `page` counts. To this end, I first map each document ID to the number of pages in each document by iterating through all the pages and reading each `page.document_id`:
 
-- I have a similar intuition for `prompt 2, question 1` - if trying to perform a string search on millions of records using JS that could otherwise be handled by our db or some other data store, it'd be more efficient to let the db do this computation which relates to `prompt 2, question 3`
+```js
+let docToPagesCountMap = {
+  34: 2,
+  87: 1,
+};
+```
+
+I then create a map between each report ID and the documents associated with it by iterating through all the `documents` and reading `document.report_id`:
+
+```js
+let reportToDocsMap = { 4: { 8: true }, 21: { 34: true, 87: true } };
+```
+
+Finally, I create the mapping between `reports` and number of pages by iterating through all reports, and for each document associated with that report as read from `reportToDocsMap`, look up the corresponding page count for that document in `docToPagesCountMap`. If a report has no pages associated with it, the report is listed in the output with a page count of 0.
 
 ### Prompt 2, Question 2
 
-We can check to make sure that the report associated with whatever `document` or `page` we are looking at is not already in our list of reports that match a search term before performing the search operation on the `document` or `page` since if the report is already included, we know that we will not add it to the list of reports again
+Function name: `keywordSearch`
+
+We can check to make sure that the report associated with whatever `document` or `page` we are looking at is not already in our list of reports that match a search term before performing the search operation on the `document` or `page` since if the report is already included, we know that we will not add it to the list of reports again. To achieve this, I created an array `matchingReports` to hold the list of reports matching a search, and an object `addedReports` that keeps track of which reports have already been added to our list. An alternative to this could be to use a `Set` to track the report list, but I chose not to go this route since I am not sure how to serialize a `Set` as JSON which seems relevant in the follow up question.
+
+First, iterate through reports and check if each `report.title` includes the search term. If a match is found, add that report to our list, as well as object so that we don't have duplicate reports in the output. Then iterate through documents and check if `document.name` matches the search term, and if the report associated with that document is absent in the current list - if both cases are true, add the report found with `document.report_id` to the list and object.
+
+We then iterate through all reports and check if the search term can be found in `report.body` or `report.footnote`. If the term is found in either value, and the report associated with the page is not in the list already, we add the associated report to our list of reports, and then return the list.
+
+Here, I assumed the `report.title` and `document.name` would not be large, maybe less than 100 characters, and that the `page.body` would take the longest time to search through, followed by `page.footnote` if it exists.
 
 ### Prompt 2, Question 3
 
@@ -108,4 +126,4 @@ function performSearch(searchTerm) {
 }
 ```
 
-**B**: assuming our asynchronous call can fail with errors, we would want to handle them either using `.catch` when Promise chaining, or using a catch block when using `async/await` syntax. After doing so, we could update the front end to indicate that the search failed for whatever reason potentially depending on an error code or message returned by the API call. Maybe we would have some piece of state in our front end to keep track of back end errors, and we can update this state when receving an error from the back end, or clear the state if the user takes some action after receiving the error.
+**B**: assuming our asynchronous call can fail with errors, we would want to handle them either using `.catch` when Promise chaining, or using a catch block when using `async/await` syntax. After doing so, we could update the front end to indicate that the search failed for whatever reason potentially depending on an error code or message returned by the API call. Maybe we would have some piece of state in our front end to keep track of back end errors, and we can update this state when receiving an error from the back end, or clear the state if the user takes some action after receiving the error.
