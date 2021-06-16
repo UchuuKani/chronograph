@@ -1,16 +1,15 @@
-import { IReport, IStore } from "./store";
-import {
+const {
   getDocumentById,
   getDocuments,
   getPageById,
   getPages,
   getReportById,
   getReports,
-} from "./utility";
+} = require("./utility");
 
 // iterate through all pages and make object where key is document id, and value is a set or array, whatever, that contains all pages for a document
-export function compileReportsWithPageCounts(dataStore: IStore) {
-  let docToPagesCountMap: { [id: number]: number } = {};
+function compileReportsWithPageCounts(dataStore) {
+  let docToPagesCountMap = {};
   for (let pageId in dataStore.page) {
     let currPage = getPageById(Number(pageId), dataStore);
 
@@ -22,9 +21,7 @@ export function compileReportsWithPageCounts(dataStore: IStore) {
   }
 
   // iterate through all documents and make object where key is documentId and value is number of pages associated with document
-  let reportToDocsMap: {
-    [reportId: number]: { [documentId: number]: boolean };
-  } = {};
+  let reportToDocsMap = {};
   for (let docId in dataStore.document) {
     let currDoc = getDocumentById(Number(docId), dataStore);
 
@@ -37,7 +34,7 @@ export function compileReportsWithPageCounts(dataStore: IStore) {
   }
 
   // need map of all reports to each document associated with it, can generate this in above loop through documents
-  let reportsPagesCounts: { [reportId: number]: number } = {};
+  let reportsPagesCounts = {};
   for (let reportId in dataStore.report) {
     let currReport = getReportById(Number(reportId), dataStore);
     // possible to have a report without documents, or documents without pages?
@@ -65,13 +62,10 @@ export function compileReportsWithPageCounts(dataStore: IStore) {
 }
 
 // would a trie be appropriate here?
-export function keywordSearch(
-  dataStore: IStore,
-  searchTerm: string
-): IReport[] {
+function keywordSearch(dataStore, searchTerm) {
   // use an array to hold reports that match search term, and an object to know which reports have already been added to the report list
-  let matchingReports: IReport[] = [];
-  let addedReports: { [reportId: string]: boolean } = {};
+  let matchingReports = [];
+  let addedReports = {};
 
   // iterate through all reports and check if string fields contain search term - should this be case-sensitive? Probably not
   // assuming report titles will be relatively small (< 100 characters)
@@ -84,7 +78,10 @@ export function keywordSearch(
     // if we find the search term in the report title, and the title id is not in addedReports map object, add report to list and map
     if (
       addedReports[id] === undefined &&
-      currentReport?.title?.indexOf(searchTerm) > -1
+      currentReport &&
+      currentReport.title &&
+      currentReport.title.indexOf &&
+      currentReport.title.indexOf(searchTerm) > -1
     ) {
       matchingReports.push(reports[Number(id)]);
       addedReports[id] = true;
@@ -103,7 +100,10 @@ export function keywordSearch(
     let relatedReport = reports[currentDocument.report_id];
     if (
       addedReports[relatedReport.id] === undefined &&
-      currentDocument?.name?.indexOf(searchTerm) > -1
+      currentDocument &&
+      currentDocument.name &&
+      currentDocument.name.indexOf &&
+      currentDocument.name.indexOf(searchTerm) > -1
     ) {
       matchingReports.push(relatedReport);
       addedReports[relatedReport.id] = true;
@@ -128,8 +128,14 @@ export function keywordSearch(
     // the list we return and add the report ID to the map tracking which reports have already been added
     if (
       addedReports[relatedReport.id] === undefined &&
-      (currentPage?.footnote?.indexOf(searchTerm) > -1 ||
-        currentPage?.body?.indexOf(searchTerm))
+      ((currentPage &&
+        currentPage.footnote &&
+        currentPage.footnote.indexOf &&
+        currentPage.footnote.indexOf(searchTerm) > -1) ||
+        (currentPage &&
+          currentPage.body &&
+          currentPage.body.indexOf &&
+          currentPage.body.indexOf(searchTerm) > -1))
     ) {
       matchingReports.push(relatedReport);
       addedReports[relatedReport.id] = true;
@@ -140,20 +146,16 @@ export function keywordSearch(
 }
 
 // choosing to pass in the data source we would read from in case there are multiple data sources with the same structure as IStore
-export function determineNumberPagesInReport(
-  reportId: number,
-  dataStore: IStore
-): {
-  reportId: number;
-  numberPages: number;
-} {
+function determineNumberPagesInReport(reportId, dataStore) {
   // handle case where we are passed a reportId that doesn't exist - should also handle if type of reportId is not a number or cannot be
   // converted from string to number - not as necessary to handle second case in TS?
-
+  if (reportId === undefined || dataStore === undefined) {
+    return;
+  }
   // if passed an invalid report, do we end the function early?
   const reportData = getReportById(reportId, dataStore);
   try {
-    let documentsMatching: { [documentId: number]: boolean } = {};
+    let documentsMatching = {};
     // for each document in the store, find which ones are related to the reportId
     for (let documentId in dataStore.document) {
       if (dataStore.document[documentId].report_id === reportId) {
@@ -164,9 +166,7 @@ export function determineNumberPagesInReport(
     let pagesMatching = 0;
     // for each page in the store, find which ones are related to every document we found
     for (let pageId in dataStore.page) {
-      if (
-        documentsMatching[dataStore?.page?.[pageId]?.document_id] !== undefined
-      ) {
+      if (documentsMatching[dataStore.page[pageId].document_id] !== undefined) {
         pagesMatching += 1;
       }
     }
@@ -175,3 +175,9 @@ export function determineNumberPagesInReport(
     console.log(err);
   }
 }
+
+module.exports = {
+  compileReportsWithPageCounts,
+  keywordSearch,
+  determineNumberPagesInReport,
+};
